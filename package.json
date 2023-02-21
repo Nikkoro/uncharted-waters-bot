@@ -10,8 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@jimp/plugin-threshold": "^0.22.5",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
+    "googleapis": "^111.0.0",
     "jimp": "^0.22.4",
     "tesseract.js": "^4.0.2"
   },
