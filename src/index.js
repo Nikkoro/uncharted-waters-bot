@@ -2,6 +2,8 @@ require("dotenv").config();
 const Tesseract = require("tesseract.js");
 const { Client, IntentsBitField } = require("discord.js");
 const Jimp = require("jimp");
+const resetSheet = require("./helpers/resetSheet.js");
+const updateSheet = require("./helpers/updateSheet.js");
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const channelID = "1076543900505882664";
@@ -18,7 +20,14 @@ let photoNr = 0;
 const preprocessImage = async (imageBuffer) => {
   const image = await Jimp.read(imageBuffer);
 
-  image.greyscale().contrast(0.5).brightness(0.5).posterize(2);
+  //image.greyscale().contrast(0.5).brightness(0.5).posterize(2);
+  image
+    .greyscale()
+    .contrast(0.5)
+    .brightness(0.5)
+    .posterize(2)
+    .threshold({ max: 256, autoGreyscale: false });
+  //   image.threshold({ max: 164, autoGreyscale: false });
 
   const processedImageBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
 
@@ -61,9 +70,24 @@ const prefix = "!";
 
 client.on("messageCreate", (message) => {
   if (message.content === `${prefix}clearAll`) {
-    message.channel.bulkDelete(100).then((messages) => {
-      message.channel.send(`Deleted ${messages.size} messages`);
-    });
+    message.channel.messages
+      .fetch({ limit: 100 })
+      .then((messages) => {
+        const nonPinnedMessages = messages.filter((m) => !m.pinned);
+        message.channel
+          .bulkDelete(nonPinnedMessages)
+          .then((deletedMessages) => {
+            message.channel.send(`Deleted ${deletedMessages.size} messages`);
+          });
+      })
+      .catch(console.error);
+  }
+});
+
+client.on("messageCreate", (message) => {
+  if (message.content === `${prefix}resetSheet`) {
+    resetSheet();
+    message.channel.send(`Sheet has been reset.`);
   }
 });
 
@@ -105,6 +129,9 @@ client.on("messageCreate", async (message) => {
     }
 
     console.log(cities, items);
+    updateSheet(cities.join(", "), items)
+      ? message.channel.send("Data has been updated in the sheet.")
+      : message.channel.send("Error updating the sheet.");
 
     if (!cities) {
       message.reply(
