@@ -30,7 +30,3 @@ DISCORD_TOKEN=your-token
 CHANNEL_ID=your-channel-id
 GOOGLE_ACCOUNT_DATA=path-to-google-json
 ```
-
-```
-
-```
