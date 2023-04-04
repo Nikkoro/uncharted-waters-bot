@@ -2,7 +2,7 @@ const { google } = require("googleapis");
 
 async function updateSheet(city, items) {
   const auth = new google.auth.GoogleAuth({
-    keyFile: "././uncharted-waters-bot-ef6c8b595272.json",
+    keyFile: `${process.env.GOOGLE_ACCOUNT_DATA}`,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 

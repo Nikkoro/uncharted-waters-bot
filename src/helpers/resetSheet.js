@@ -6,7 +6,7 @@ const sheetTitle = "Arkusz1";
 async function resetCells() {
   const client = await google.auth.getClient({
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    keyFile: "././uncharted-waters-bot-ef6c8b595272.json",
+    keyFile: `${process.env.GOOGLE_ACCOUNT_DATA}`,
   });
 
   const sheets = google.sheets({ version: "v4", auth: client });

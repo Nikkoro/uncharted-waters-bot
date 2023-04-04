@@ -6,7 +6,7 @@ const resetSheet = require("./helpers/resetSheet.js");
 const updateSheet = require("./helpers/updateSheet.js");
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-const channelID = "1076543900505882664";
+const channelID = process.env.CHANNEL_ID;
 
 const recognizeText = async (imgBuffer) => {
   const {
