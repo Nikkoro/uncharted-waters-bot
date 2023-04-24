@@ -1,16 +1,15 @@
 const { google } = require("googleapis");
 
+const spreadsheetId = "1hNSQafZhcE0xmhADxy5nxDDqYV4BnInmgweK2eAotQs";
+const sheetTitle = "Arkusz1";
+
 async function updateSheet(city, items) {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: `${process.env.GOOGLE_ACCOUNT_DATA}`,
+  const client = await google.auth.getClient({
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    keyFile: `${process.env.GOOGLE_ACCOUNT_DATA}`,
   });
 
-  const client = await auth.getClient();
-  const spreadsheetId = "1hNSQafZhcE0xmhADxy5nxDDqYV4BnInmgweK2eAotQs";
-  const sheetTitle = "Arkusz1";
-
-  const sheets = google.sheets({ version: "v4", auth });
+  const sheets = google.sheets({ version: "v4", auth: client });
   const range = `${sheetTitle}!A1:U41`;
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
