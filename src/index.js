@@ -4,10 +4,10 @@ const { Client, IntentsBitField } = require("discord.js");
 const Jimp = require("jimp");
 const resetSheet = require("./helpers/resetSheet.js");
 const updateSheet = require("./helpers/updateSheet.js");
-const matchCityName = require("./test.js");
+const matchCityName = require("./helpers/extractCity.js");
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-const channelID = process.env.CHANNEL_ID;
+const channelID = process.env.CHANNEL_ID_TEST;
 
 const recognizeText = async (imgBuffer) => {
   const worker = await createWorker({
