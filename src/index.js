@@ -1,46 +1,14 @@
 require("dotenv").config();
-const { createWorker } = require("tesseract.js");
-const { Client, IntentsBitField } = require("discord.js");
-const Jimp = require("jimp");
-const resetSheet = require("./helpers/resetSheet.js");
+const fs = require("node:fs");
+const path = require("node:path");
+const { Client, IntentsBitField, Collection } = require("discord.js");
 const updateSheet = require("./helpers/updateSheet.js");
 const matchCityName = require("./helpers/extractCity.js");
+const recognizeText = require("./ocr/recognizeText.js");
+const preprocessImage = require("./ocr/preprocessImage.js");
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-const channelID = process.env.CHANNEL_ID_TEST;
-
-const recognizeText = async (imgBuffer) => {
-  const worker = await createWorker({
-    logger: (m) => console.log(m),
-  });
-  await worker.loadLanguage("eng2");
-  await worker.initialize("eng2");
-
-  const {
-    data: { text },
-  } = await worker.recognize(imgBuffer);
-  await worker.terminate();
-  return text;
-};
-
-// let photoNr = 0;
-
-const preprocessImage = async (imageBuffer) => {
-  const image = await Jimp.read(imageBuffer);
-
-  image
-    .color([
-      { apply: "desaturate", params: [90] },
-      { apply: "darken", params: [5] },
-    ])
-    .contrast(0.8);
-
-  const processedImageBuffer = await image.getBufferAsync(Jimp.MIME_JPEG);
-
-  //   await image.writeAsync(`resources/processed${"convolute"}.jpg`);
-  //   photoNr++;
-  return processedImageBuffer;
-};
+const channelID = process.env.CHANNEL_ID;
 
 const client = new Client({
   intents: [
@@ -51,26 +19,44 @@ const client = new Client({
   ],
 });
 
+client.commands = new Collection();
+const foldersPath = path.join(__dirname, "commands");
+const commandFolders = fs.readdirSync(foldersPath);
+
+for (const folder of commandFolders) {
+  const commandsPath = path.join(foldersPath, folder);
+  const commandFiles = fs
+    .readdirSync(commandsPath)
+    .filter((file) => file.endsWith(".js"));
+  for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = require(filePath);
+    if ("data" in command && "execute" in command) {
+      client.commands.set(command.data.name, command);
+    } else {
+      console.log(
+        `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
+      );
+    }
+  }
+}
+
+const eventsPath = path.join(__dirname, "events");
+const eventFiles = fs
+  .readdirSync(eventsPath)
+  .filter((file) => file.endsWith(".js"));
+
+for (const file of eventFiles) {
+  const filePath = path.join(eventsPath, file);
+  const event = require(filePath);
+  if (event.once) {
+    client.once(event.name, (...args) => event.execute(...args));
+  } else {
+    client.on(event.name, (...args) => event.execute(...args));
+  }
+}
+
 client.login(DISCORD_TOKEN);
-
-client.on("ready", () => {
-  console.log(`Ready! Logged in as ${client.user.tag}`);
-});
-
-client.on("messageCreate", (message) => {
-  if (
-    message.channel.id === channelID &&
-    message.content.toLowerCase() === "ping"
-  ) {
-    message.reply("pong");
-  }
-});
-
-client.on("messageCreate", (message) => {
-  if (message.channel.id === channelID && message.content === "John Cena") {
-    message.reply("Bing Chilling");
-  }
-});
 
 const prefix = "!";
 
@@ -87,13 +73,6 @@ client.on("messageCreate", (message) => {
           });
       })
       .catch(console.error);
-  }
-});
-
-client.on("messageCreate", (message) => {
-  if (message.content === `${prefix}resetSheet`) {
-    resetSheet();
-    message.channel.send(`Sheet has been reset.`);
   }
 });
 
