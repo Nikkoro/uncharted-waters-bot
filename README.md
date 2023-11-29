@@ -2,8 +2,8 @@
 
 ## Requirements
 
-- .env file ([>click<](#example-env))
-- Google account data in json format ( [>click<](#google-account-data))
+- .env file in base directory ([>click<](#example-env))
+- Google account data in json format in base directory ( [>click<](#google-account-data))
 
 - config.json in src directory ([>click<](#discord-config))
 
@@ -21,8 +21,6 @@ npm run start:dev # with nodemon
 ```
 
 ## Example env
-
-Put this in a file called `.env` in the src directory.
 
 ```bash
 DISCORD_TOKEN=your-token
