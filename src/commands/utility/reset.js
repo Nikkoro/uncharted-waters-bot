@@ -1,16 +1,13 @@
-// Import the necessary modules
 const { SlashCommandBuilder } = require("discord.js");
 const resetSheet = require("../../helpers/resetSheet.js");
 
-// Create the slash command
 const resetSheetCommand = new SlashCommandBuilder()
   .setName("resetsheet")
   .setDescription("Reset the Google Sheet");
 
-// Execute the slash command
 async function execute(interaction) {
   try {
-    await resetSheet(); // Call the function from resetSheet.js
+    await resetSheet();
     await interaction.reply("Google Sheet reset successful!");
   } catch (error) {
     console.error(error);
