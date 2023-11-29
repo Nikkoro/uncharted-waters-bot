@@ -5,7 +5,6 @@ const { Client, IntentsBitField, Collection } = require("discord.js");
 const updateSheet = require("./helpers/updateSheet.js");
 const matchCityName = require("./helpers/extractCity.js");
 const recognizeText = require("./ocr/recognizeText.js");
-const preprocessImage = require("./ocr/preprocessImage.js");
 
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const channelID = process.env.CHANNEL_ID;
@@ -58,79 +57,59 @@ for (const file of eventFiles) {
 
 client.login(DISCORD_TOKEN);
 
-const prefix = "!";
-
-client.on("messageCreate", (message) => {
-  if (message.content === `${prefix}clearAll`) {
-    message.channel.messages
-      .fetch({ limit: 100 })
-      .then((messages) => {
-        const nonPinnedMessages = messages.filter((m) => !m.pinned);
-        message.channel
-          .bulkDelete(nonPinnedMessages)
-          .then((deletedMessages) => {
-            message.channel.send(`Deleted ${deletedMessages.size} messages`);
-          });
-      })
-      .catch(console.error);
-  }
-});
-
 client.on("messageCreate", async (message) => {
-  if (
-    message.channel.id === channelID &&
-    message.attachments.size > 0 &&
-    message.attachments.first().contentType.startsWith("image/")
-  ) {
-    const image = message.attachments.first();
-    const imageUrl = image.url;
-    const response = await fetch(imageUrl);
-    const imgBuffer = await response.arrayBuffer();
-    console.log(imgBuffer);
+  if (message.channel.id === channelID && message.attachments.size > 0) {
+    message.attachments.forEach(async (attachment) => {
+      if (
+        attachment.contentType &&
+        attachment.contentType.startsWith("image/")
+      ) {
+        const imageUrl = attachment.url;
 
-    const processedImageBuffer = await preprocessImage(imgBuffer);
+        const response = await fetch(imageUrl);
+        const imgBuffer = await response.arrayBuffer();
 
-    const text = await recognizeText(processedImageBuffer);
+        const text = await recognizeText(imgBuffer);
 
-    // const citiesRegex =
-    //   /Aden|Alexandria|Amsterdam|Athens|Basrah|Boston|Brunei|Buenos Aires|Calicut|Kolkata|Cape Town|Cayenne|Ceylon|Copenhagen|Darwin|Edo|Hamburg|Hangzhou|Istanbul|Jamaica|Las Palmas|Lisbon|London|Luanda|Malacca|Manila|Marseille|Mozambique|Nantes|Nassau|Panama City|Pinjarra|Quanzhou|Rio De Janeiro|Santo Domingo|Seville|St\. George's|Stockholm|Tunis|Venice/g;
-    const cities = matchCityName(text.substring(0, 20));
+        const cities = matchCityName(text.substring(0, 20));
 
-    const itemsRegex =
-      /Alcohol|Agate|Peanuts|Firearms|Bananas|Meat|Paper|Diamonds|Tea Leaves|Medicine|Gold|Leather|Pearls|Fish|Porcelain|Tin|Cloth|Tobacco|Carpets|Dye/g;
+        const itemsRegex =
+          /Alcohol|Agate|Peanuts|Firearms|Bananas|Meat|Paper|Diamonds|Tea Leaves|Medicine|Gold|Leather|Pearls|Fish|Porcelain|Tin|Cloth|Tobacco|Carpets|Dye/g;
 
-    const pricesRegex = /\((\d+)%[\/f]?\)/g;
+        const pricesRegex = /\((\d+)%[\/f]?\)/g;
 
-    let items = {},
-      match;
+        let items = {},
+          match;
 
-    while ((match = itemsRegex.exec(text))) {
-      items[match[0]] = 0;
-    }
-    while ((match = pricesRegex.exec(text))) {
-      const item = itemsRegex.exec(text);
-      if (item) {
-        items[item[0]] = Number(match[1]);
+        while ((match = itemsRegex.exec(text))) {
+          items[match[0]] = 0;
+        }
+        while ((match = pricesRegex.exec(text))) {
+          const item = itemsRegex.exec(text);
+          if (item) {
+            items[item[0]] = Number(match[1]);
+          }
+        }
+
+        console.log(cities, items);
+        updateSheet(cities, items)
+          ? message.channel.send("Data has been updated in the sheet.")
+          : message.channel.send("Error updating the sheet.");
+
+        if (!cities) {
+          message.reply(
+            `City: not found\nItems: \n${Object.keys(items)
+              .map((item) => `${item}: ${items[item]}%`)
+              .join("\n")}`
+          );
+        } else {
+          message.reply(
+            `City: ${cities}\nItems: \n${Object.keys(items)
+              .map((item) => `${item}: ${items[item]}%`)
+              .join("\n")}`
+          );
+        }
       }
-    }
-
-    console.log(cities, items);
-    updateSheet(cities, items)
-      ? message.channel.send("Data has been updated in the sheet.")
-      : message.channel.send("Error updating the sheet.");
-
-    if (!cities) {
-      message.reply(
-        `City: not found\nItems: \n${Object.keys(items)
-          .map((item) => `${item}: ${items[item]}%`)
-          .join("\n")}`
-      );
-    } else {
-      message.reply(
-        `City: ${cities}\nItems: \n${Object.keys(items)
-          .map((item) => `${item}: ${items[item]}%`)
-          .join("\n")}`
-      );
-    }
+    });
   }
 });
