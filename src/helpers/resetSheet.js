@@ -1,7 +1,7 @@
+require("dotenv").config();
 const { google } = require("googleapis");
-
-const spreadsheetId = "1hNSQafZhcE0xmhADxy5nxDDqYV4BnInmgweK2eAotQs";
-const sheetTitle = "Arkusz1";
+const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+const sheetTitle = process.env.GOOGLE_SHEET_TITLE;
 
 async function resetCells() {
   const client = await google.auth.getClient({

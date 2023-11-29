@@ -4,7 +4,9 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "start:dev": "nodemon src/index.js"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +18,7 @@
     "fuzzball": "^2.1.2",
     "googleapis": "^111.0.0",
     "jimp": "^0.22.4",
-    "tesseract.js": "^4.0.2"
+    "tesseract.js": "^5.0.3"
   },
   "devDependencies": {
     "nodemon": "^2.0.20"
